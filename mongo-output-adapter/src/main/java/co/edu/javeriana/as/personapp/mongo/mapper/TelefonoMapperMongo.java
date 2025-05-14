@@ -3,6 +3,7 @@ package co.edu.javeriana.as.personapp.mongo.mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import co.edu.javeriana.as.personapp.common.annotations.Mapper;
+import co.edu.javeriana.as.personapp.domain.Gender;
 import co.edu.javeriana.as.personapp.domain.Person;
 import co.edu.javeriana.as.personapp.domain.Phone;
 import co.edu.javeriana.as.personapp.mongo.document.PersonaDocument;
@@ -24,7 +25,16 @@ public class TelefonoMapperMongo {
 	}
 
 	private PersonaDocument validateDuenio(@NonNull Person owner) {
-		return owner != null ? personaMapperMongo.fromDomainToAdapter(owner) : new PersonaDocument();
+		if (owner == null) return new PersonaDocument();
+		
+		// Just create a simple document with basic data to avoid circular dependencies
+		PersonaDocument personaDocument = new PersonaDocument();
+		personaDocument.setId(owner.getIdentification());
+		personaDocument.setNombre(owner.getFirstName());
+		personaDocument.setApellido(owner.getLastName());
+		personaDocument.setGenero(owner.getGender() == Gender.FEMALE ? "F" : owner.getGender() == Gender.MALE ? "M" : " ");
+		personaDocument.setEdad(owner.getAge());
+		return personaDocument;
 	}
 
 	public Phone fromAdapterToDomain(TelefonoDocument telefonoDocument) {
@@ -36,6 +46,15 @@ public class TelefonoMapperMongo {
 	}
 
 	private @NonNull Person validateOwner(PersonaDocument duenio) {
-		return duenio != null ? personaMapperMongo.fromAdapterToDomain(duenio) : new Person();
+		if (duenio == null) return new Person();
+		
+		// Just create a simple person with basic data to avoid circular dependencies
+		Person person = new Person();
+		person.setIdentification(duenio.getId());
+		person.setFirstName(duenio.getNombre());
+		person.setLastName(duenio.getApellido());
+		person.setGender("F".equals(duenio.getGenero()) ? Gender.FEMALE : "M".equals(duenio.getGenero()) ? Gender.MALE : Gender.OTHER);
+		person.setAge(duenio.getEdad());
+		return person;
 	}
 }

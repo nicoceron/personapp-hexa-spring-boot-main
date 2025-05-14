@@ -7,9 +7,14 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import co.edu.javeriana.as.personapp.common.annotations.Mapper;
+import co.edu.javeriana.as.personapp.domain.Gender;
+import co.edu.javeriana.as.personapp.domain.Person;
+import co.edu.javeriana.as.personapp.domain.Profession;
 import co.edu.javeriana.as.personapp.domain.Study;
 import co.edu.javeriana.as.personapp.mariadb.entity.EstudiosEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.EstudiosEntityPK;
+import co.edu.javeriana.as.personapp.mariadb.entity.PersonaEntity;
+import co.edu.javeriana.as.personapp.mariadb.entity.ProfesionEntity;
 
 @Mapper
 public class EstudiosMapperMaria {
@@ -43,11 +48,33 @@ public class EstudiosMapperMaria {
 
 	public Study fromAdapterToDomain(EstudiosEntity estudiosEntity) {
 		Study study = new Study();
-		study.setPerson(personaMapperMaria.fromAdapterToDomain(estudiosEntity.getPersona()));
-		study.setProfession(profesionMapperMaria.fromAdapterToDomain(estudiosEntity.getProfesion()));
+		
+		// Create a simplified Person to avoid circular dependencies
+		Person person = new Person();
+		PersonaEntity personaEntity = estudiosEntity.getPersona();
+		if (personaEntity != null) {
+			person.setIdentification(personaEntity.getCc());
+			person.setFirstName(personaEntity.getNombre());
+			person.setLastName(personaEntity.getApellido());
+			person.setGender(personaEntity.getGenero() == 'F' ? Gender.FEMALE : 
+				personaEntity.getGenero() == 'M' ? Gender.MALE : Gender.OTHER);
+			person.setAge(personaEntity.getEdad());
+		}
+		study.setPerson(person);
+		
+		// Create a simplified Profession to avoid circular dependencies
+		Profession profession = new Profession();
+		ProfesionEntity profesionEntity = estudiosEntity.getProfesion();
+		if (profesionEntity != null) {
+			profession.setIdentification(profesionEntity.getId());
+			profession.setName(profesionEntity.getNom());
+			profession.setDescription(profesionEntity.getDes());
+		}
+		study.setProfession(profession);
+		
 		study.setGraduationDate(validateGraduationDate(estudiosEntity.getFecha()));
 		study.setUniversityName(validateUniversityName(estudiosEntity.getUniver()));
-		return null;
+		return study;
 	}
 
 	private LocalDate validateGraduationDate(Date fecha) {

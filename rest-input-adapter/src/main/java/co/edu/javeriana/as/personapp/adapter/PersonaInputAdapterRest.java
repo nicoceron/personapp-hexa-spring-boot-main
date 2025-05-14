@@ -12,6 +12,7 @@ import co.edu.javeriana.as.personapp.application.port.out.PersonOutputPort;
 import co.edu.javeriana.as.personapp.application.usecase.PersonUseCase;
 import co.edu.javeriana.as.personapp.common.annotations.Adapter;
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
+import co.edu.javeriana.as.personapp.common.exceptions.NoExistException;
 import co.edu.javeriana.as.personapp.common.setup.DatabaseOption;
 import co.edu.javeriana.as.personapp.domain.Gender;
 import co.edu.javeriana.as.personapp.domain.Person;
@@ -49,8 +50,8 @@ public class PersonaInputAdapterRest {
 		}
 	}
 
-	public List<PersonaResponse> historial(String database) {
-		log.info("Into historial PersonaEntity in Input Adapter");
+	public List<PersonaResponse> findAll(String database) {
+		log.info("Into findAll PersonaEntity in Input Adapter");
 		try {
 			if(setPersonOutputPortInjection(database).equalsIgnoreCase(DatabaseOption.MARIA.toString())){
 				return personInputPort.findAll().stream().map(personaMapperRest::fromDomainToAdapterRestMaria)
@@ -66,16 +67,70 @@ public class PersonaInputAdapterRest {
 		}
 	}
 
-	public PersonaResponse crearPersona(PersonaRequest request) {
+	public PersonaResponse create(PersonaRequest request) {
+		log.info("Into create PersonaEntity in Input Adapter");
 		try {
 			setPersonOutputPortInjection(request.getDatabase());
 			Person person = personInputPort.create(personaMapperRest.fromAdapterToDomain(request));
-			return personaMapperRest.fromDomainToAdapterRestMaria(person);
+			return personaMapperRest.fromDomainToAdapterRest(person, request.getDatabase());
 		} catch (InvalidOptionException e) {
 			log.warn(e.getMessage());
-			//return new PersonaResponse("", "", "", "", "", "", "");
+			return new PersonaResponse(request.getDni(), request.getFirstName(), request.getLastName(), 
+					request.getAge(), request.getSex(), request.getDatabase(), "ERROR: " + e.getMessage());
 		}
-		return null;
 	}
-
+	
+	public PersonaResponse edit(Integer identification, PersonaRequest request) {
+		log.info("Into edit PersonaEntity in Input Adapter");
+		try {
+			setPersonOutputPortInjection(request.getDatabase());
+			Person person = personaMapperRest.fromAdapterToDomain(request);
+			person = personInputPort.edit(identification, person);
+			return personaMapperRest.fromDomainToAdapterRest(person, request.getDatabase());
+		} catch (InvalidOptionException | NoExistException e) {
+			log.warn(e.getMessage());
+			return new PersonaResponse(request.getDni(), request.getFirstName(), request.getLastName(), 
+					request.getAge(), request.getSex(), request.getDatabase(), "ERROR: " + e.getMessage());
+		}
+	}
+	
+	public PersonaResponse delete(Integer identification, String database) {
+		log.info("Into delete PersonaEntity in Input Adapter");
+		try {
+			setPersonOutputPortInjection(database);
+			Person person = personInputPort.findOne(identification);
+			Boolean result = personInputPort.drop(identification);
+			if (result) {
+				return personaMapperRest.fromDomainToAdapterRest(person, database, "DELETED");
+			} else {
+				return personaMapperRest.createErrorResponse("Failed to delete person with ID: " + identification, database);
+			}
+		} catch (InvalidOptionException | NoExistException e) {
+			log.warn(e.getMessage());
+			return personaMapperRest.createErrorResponse(e.getMessage(), database);
+		}
+	}
+	
+	public PersonaResponse findById(Integer identification, String database) {
+		log.info("Into findById PersonaEntity in Input Adapter");
+		try {
+			setPersonOutputPortInjection(database);
+			Person person = personInputPort.findOne(identification);
+			return personaMapperRest.fromDomainToAdapterRest(person, database);
+		} catch (InvalidOptionException | NoExistException e) {
+			log.warn(e.getMessage());
+			return personaMapperRest.createErrorResponse(e.getMessage(), database);
+		}
+	}
+	
+	public Integer count(String database) {
+		log.info("Into count PersonaEntity in Input Adapter");
+		try {
+			setPersonOutputPortInjection(database);
+			return personInputPort.count();
+		} catch (InvalidOptionException e) {
+			log.warn(e.getMessage());
+			return 0;
+		}
+	}
 }

@@ -64,7 +64,9 @@ public class PersonaMapperMaria {
 		person.setLastName(personaEntity.getApellido());
 		person.setGender(validateGender(personaEntity.getGenero()));
 		person.setAge(validateAge(personaEntity.getEdad()));
-		person.setStudies(validateStudies(personaEntity.getEstudios()));
+		
+		// Skip study relationships to avoid circular dependencies
+		person.setStudies(new ArrayList<Study>());
 		person.setPhoneNumbers(validatePhones(personaEntity.getTelefonos()));
 		return person;
 	}
@@ -77,7 +79,8 @@ public class PersonaMapperMaria {
 		return edad != null && edad >= 0 ? edad : null;
 	}
 
-	private List<Study> validateStudies(List<EstudiosEntity> estudiosEntity) {
+	// This method is intentionally not used to avoid circular dependencies
+	private List<Study> validateStudiesOld(List<EstudiosEntity> estudiosEntity) {
 		return estudiosEntity != null && !estudiosEntity.isEmpty() ? estudiosEntity.stream()
 				.map(estudio -> estudiosMapperMaria.fromAdapterToDomain(estudio)).collect(Collectors.toList())
 				: new ArrayList<Study>();

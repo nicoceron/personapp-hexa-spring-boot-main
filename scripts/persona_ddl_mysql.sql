@@ -5,19 +5,19 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema arq_per_db
+-- Schema persona_db
 -- -----------------------------------------------------
 
 -- -----------------------------------------------------
--- Schema arq_per_db
+-- Schema persona_db
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `arq_per_db` DEFAULT CHARACTER SET latin1 ;
-USE `arq_per_db` ;
+CREATE SCHEMA IF NOT EXISTS `persona_db` DEFAULT CHARACTER SET latin1 ;
+USE `persona_db` ;
 
 -- -----------------------------------------------------
--- Table `arq_per_db`.`persona`
+-- Table `persona_db`.`persona`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `arq_per_db`.`persona` (
+CREATE TABLE IF NOT EXISTS `persona_db`.`persona` (
   `cc` INT(15) NOT NULL,
   `nombre` VARCHAR(45) NOT NULL,
   `apellido` VARCHAR(45) NOT NULL,
@@ -29,9 +29,9 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `arq_per_db`.`profesion`
+-- Table `persona_db`.`profesion`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `arq_per_db`.`profesion` (
+CREATE TABLE IF NOT EXISTS `persona_db`.`profesion` (
   `id` INT(6) NOT NULL,
   `nom` VARCHAR(90) NOT NULL,
   `des` TEXT NULL DEFAULT NULL,
@@ -41,9 +41,9 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `arq_per_db`.`estudios`
+-- Table `persona_db`.`estudios`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `arq_per_db`.`estudios` (
+CREATE TABLE IF NOT EXISTS `persona_db`.`estudios` (
   `id_prof` INT(6) NOT NULL,
   `cc_per` INT(15) NOT NULL,
   `fecha` DATE NULL DEFAULT NULL,
@@ -52,18 +52,18 @@ CREATE TABLE IF NOT EXISTS `arq_per_db`.`estudios` (
   INDEX `estudio_persona_fk` (`cc_per` ASC) VISIBLE,
   CONSTRAINT `estudio_persona_fk`
     FOREIGN KEY (`cc_per`)
-    REFERENCES `arq_per_db`.`persona` (`cc`),
+    REFERENCES `persona_db`.`persona` (`cc`),
   CONSTRAINT `estudio_profesion_fk`
     FOREIGN KEY (`id_prof`)
-    REFERENCES `arq_per_db`.`profesion` (`id`))
+    REFERENCES `persona_db`.`profesion` (`id`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `arq_per_db`.`telefono`
+-- Table `persona_db`.`telefono`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `arq_per_db`.`telefono` (
+CREATE TABLE IF NOT EXISTS `persona_db`.`telefono` (
   `num` VARCHAR(15) NOT NULL,
   `oper` VARCHAR(45) NOT NULL,
   `duenio` INT(15) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `arq_per_db`.`telefono` (
   INDEX `telefono_persona_fk` (`duenio` ASC) VISIBLE,
   CONSTRAINT `telefono_persona_fk`
     FOREIGN KEY (`duenio`)
-    REFERENCES `arq_per_db`.`persona` (`cc`))
+    REFERENCES `persona_db`.`persona` (`cc`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 

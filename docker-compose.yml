@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  mariadb:
+    build:
+      context: .
+      dockerfile: mariadb.Dockerfile
+    container_name: personapp-mariadb
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=persona_db
+      - MYSQL_USER=persona_db
+      - MYSQL_PASSWORD=persona_db
+    networks:
+      - personapp-network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  mongodb:
+    build:
+      context: .
+      dockerfile: mongodb.Dockerfile
+    container_name: personapp-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_DATABASE=admin
+    networks:
+      - personapp-network
+    volumes:
+      - mongodb_data:/data/db
+
+  personapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personapp-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - mariadb
+      - mongodb
+    networks:
+      - personapp-network
+
+networks:
+  personapp-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  mongodb_data:
