@@ -42,6 +42,30 @@ db.persona.insertMany(
       edad: NumberInt(18),
       _class: "co.edu.javeriana.as.personapp.mongo.document.PersonaDocument",
     },
+    {
+      _id: NumberInt(404040404),
+      nombre: "Luis",
+      apellido: "Gomez",
+      genero: "M",
+      edad: NumberInt(28),
+      _class: "co.edu.javeriana.as.personapp.mongo.document.PersonaDocument",
+    },
+    {
+      _id: NumberInt(505050505),
+      nombre: "Sofia",
+      apellido: "Hernandez",
+      genero: "F",
+      edad: NumberInt(33),
+      _class: "co.edu.javeriana.as.personapp.mongo.document.PersonaDocument",
+    },
+    {
+      _id: NumberInt(606060606),
+      nombre: "David",
+      apellido: "Ramirez",
+      genero: "M",
+      edad: NumberInt(22),
+      _class: "co.edu.javeriana.as.personapp.mongo.document.PersonaDocument",
+    },
   ],
   { ordered: false }
 );

@@ -1,6 +1,7 @@
 package co.edu.javeriana.as.personapp.mongo.adapter;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,38 +28,37 @@ public class PersonOutputAdapterMongo implements PersonOutputPort {
 	
 	@Override
 	public Person save(Person person) {
-		log.debug("Into save on Adapter MongoDB");
+		log.debug("Into save PersonEntity in MongoDB Adapter");
 		try {
 			PersonaDocument persistedPersona = personaRepositoryMongo.save(personaMapperMongo.fromDomainToAdapter(person));
 			return personaMapperMongo.fromAdapterToDomain(persistedPersona);
 		} catch (MongoWriteException e) {
-			log.warn(e.getMessage());
-			return person;
+			log.error("Error saving person to MongoDB", e);
+			// Depending on the desired behavior, you might re-throw, return null, or a specific error object.
+			return null;
 		}		
 	}
 
 	@Override
-	public Boolean delete(Integer identification) {
-		log.debug("Into delete on Adapter MongoDB");
-		personaRepositoryMongo.deleteById(identification);
-		return personaRepositoryMongo.findById(identification).isEmpty();
+	public Boolean delete(Long cc) {
+		log.debug("Into delete PersonEntity in MongoDB Adapter");
+		personaRepositoryMongo.deleteById(cc.intValue());
+		return !personaRepositoryMongo.existsById(cc.intValue());
 	}
 
 	@Override
-	public List<Person> find() {
-		log.debug("Into find on Adapter MongoDB");
-		return personaRepositoryMongo.findAll().stream().map(personaMapperMongo::fromAdapterToDomain)
+	public List<Person> findAll() {
+		log.debug("Into findAll PersonEntity in MongoDB Adapter");
+		return personaRepositoryMongo.findAll().stream()
+				.map(personaMapperMongo::fromAdapterToDomain)
 				.collect(Collectors.toList());
 	}
 
 	@Override
-	public Person findById(Integer identification) {
-		log.debug("Into findById on Adapter MongoDB");
-		if (personaRepositoryMongo.findById(identification).isEmpty()) {
-			return null;
-		} else {
-			return personaMapperMongo.fromAdapterToDomain(personaRepositoryMongo.findById(identification).get());
-		}
+	public Person findById(Long cc) {
+		log.debug("Into findById PersonEntity in MongoDB Adapter");
+		Optional<PersonaDocument> optionalPersonaDocument = personaRepositoryMongo.findById(cc.intValue());
+		return optionalPersonaDocument.map(personaMapperMongo::fromAdapterToDomain).orElse(null);
 	}
 
 }

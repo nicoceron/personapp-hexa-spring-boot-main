@@ -12,21 +12,21 @@ import co.edu.javeriana.as.personapp.domain.Study;
 @Port
 public interface PersonInputPort {
 	
-	public void setPersintence(PersonOutputPort personPersintence);
+	void setPersistence(PersonOutputPort personOutputPort);
 	
-	public Person create(Person person);
+	Person create(Person person);
 
-	public Person edit(Integer identification, Person person) throws NoExistException;
+	Person edit(Long cc, Person person) throws NoExistException;
 
-	public Boolean drop(Integer identification) throws NoExistException;
+	Boolean drop(Long cc) throws NoExistException;
 
-	public List<Person> findAll();
+	List<Person> findAll();
 
-	public Person findOne(Integer identification) throws NoExistException;
+	Person findOne(Long cc) throws NoExistException;
 
-	public Integer count();
+	Integer count();
 
-	public List<Phone> getPhones(Integer identification) throws NoExistException;
+	List<Phone> getPhones(Long cc) throws NoExistException;
 
-	public List<Study> getStudies(Integer identification) throws NoExistException;
+	List<Study> getStudies(Long cc) throws NoExistException;
 }

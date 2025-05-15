@@ -3,6 +3,7 @@ package co.edu.javeriana.as.personapp.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.javeriana.as.personapp.adapter.PersonaInputAdapterRest;
@@ -27,45 +28,35 @@ public class PersonaControllerV1 {
 	@Autowired
 	private PersonaInputAdapterRest personaInputAdapterRest;
 	
-	@ResponseBody
 	@GetMapping(path = "/{database}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public List<PersonaResponse> findAll(@PathVariable String database) {
-		log.info("GET /api/v1/persona/{} - Find all personas", database);
+	public List<PersonaResponse> personas(@PathVariable String database) {
+		log.info("Into personas REST API");
 		return personaInputAdapterRest.findAll(database.toUpperCase());
 	}
 	
-	@ResponseBody
-	@GetMapping(path = "/{database}/count", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Integer count(@PathVariable String database) {
-		log.info("GET /api/v1/persona/{}/count - Count personas", database);
-		return personaInputAdapterRest.count(database.toUpperCase());
+	@PostMapping(path = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public PersonaResponse crearPersona(@RequestBody PersonaRequest request) {
+		log.info("esta en el metodo crearTarea en el controller del api");
+		return personaInputAdapterRest.create(request);
 	}
 	
-	@ResponseBody
 	@GetMapping(path = "/{database}/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public PersonaResponse findById(@PathVariable String database, @PathVariable Integer id) {
+	public PersonaResponse findById(@PathVariable String database, @PathVariable Long id) {
 		log.info("GET /api/v1/persona/{}/{} - Find persona by ID", database, id);
 		return personaInputAdapterRest.findById(id, database.toUpperCase());
 	}
 	
-	@ResponseBody
-	@PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public PersonaResponse create(@RequestBody PersonaRequest request) {
-		log.info("POST /api/v1/persona - Create persona");
-		return personaInputAdapterRest.create(request);
-	}
-	
-	@ResponseBody
-	@PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public PersonaResponse edit(@PathVariable Integer id, @RequestBody PersonaRequest request) {
+	@PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public PersonaResponse edit(@PathVariable Long id, @RequestBody PersonaRequest request) {
 		log.info("PUT /api/v1/persona/{} - Edit persona", id);
 		return personaInputAdapterRest.edit(id, request);
 	}
 	
-	@ResponseBody
-	@DeleteMapping(path = "/{database}/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public PersonaResponse delete(@PathVariable String database, @PathVariable Integer id) {
+	@DeleteMapping(path = "/{database}/{id}")
+	@ResponseStatus(code = HttpStatus.NO_CONTENT)
+	public void delete(@PathVariable String database, @PathVariable Long id) {
 		log.info("DELETE /api/v1/persona/{}/{} - Delete persona", database, id);
-		return personaInputAdapterRest.delete(id, database.toUpperCase());
+		personaInputAdapterRest.delete(id, database.toUpperCase());
 	}
 }

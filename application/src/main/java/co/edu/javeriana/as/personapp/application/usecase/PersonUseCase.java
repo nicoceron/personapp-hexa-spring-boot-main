@@ -17,54 +17,57 @@ import lombok.extern.slf4j.Slf4j;
 @UseCase
 public class PersonUseCase implements PersonInputPort {
 
+	private PersonOutputPort personPersistance;
 	
-	private PersonOutputPort personPersintence;
-	
-	public PersonUseCase(@Qualifier("personOutputAdapterMaria") PersonOutputPort personPersintence) {
-		this.personPersintence=personPersintence;
+	public PersonUseCase(@Qualifier("personOutputAdapterMaria") PersonOutputPort personOutputPort) {
+		this.personPersistance = personOutputPort;
 	}
 	
 	@Override
-	public void setPersintence(PersonOutputPort personPersintence) {
-		this.personPersintence=personPersintence;
+	public void setPersistence(PersonOutputPort personOutputPort) {
+		this.personPersistance = personOutputPort;
 	}
 
 	@Override
 	public Person create(Person person) {
-		log.debug("Into create on Application Domain");
-		return personPersintence.save(person);
+		log.debug("Into create Person UseCase");
+		return personPersistance.save(person);
 	}
 
 	@Override
-	public Person edit(Integer identification, Person person) throws NoExistException {
-		Person oldPerson = personPersintence.findById(identification);
+	public Person edit(Long cc, Person person) throws NoExistException {
+		log.debug("Into edit Person UseCase");
+		Person oldPerson = personPersistance.findById(cc);
 		if (oldPerson != null)
-			return personPersintence.save(person);
+			return personPersistance.save(person);
 		throw new NoExistException(
-				"The person with id " + identification + " does not exist into db, cannot be edited");
+				"The person with id " + cc + " does not exist into db, cannot be edited");
 	}
 
 	@Override
-	public Boolean drop(Integer identification) throws NoExistException {
-		Person oldPerson = personPersintence.findById(identification);
+	public Boolean drop(Long cc) throws NoExistException {
+		log.debug("Into drop Person UseCase");
+		Person oldPerson = personPersistance.findById(cc);
 		if (oldPerson != null)
-			return personPersintence.delete(identification);
+			return personPersistance.delete(cc);
 		throw new NoExistException(
-				"The person with id " + identification + " does not exist into db, cannot be dropped");
+				"The person with id " + cc + " does not exist into db, cannot be dropped");
 	}
 
 	@Override
 	public List<Person> findAll() {
-		log.info("Output: " + personPersintence.getClass());
-		return personPersintence.find();
+		log.debug("Into findAll Person UseCase");
+		return personPersistance.findAll();
 	}
 
 	@Override
-	public Person findOne(Integer identification) throws NoExistException {
-		Person oldPerson = personPersintence.findById(identification);
+	public Person findOne(Long cc) throws NoExistException {
+		log.debug("Into findOne Person UseCase");
+		Person oldPerson = personPersistance.findById(cc);
 		if (oldPerson != null)
 			return oldPerson;
-		throw new NoExistException("The person with id " + identification + " does not exist into db, cannot be found");
+		throw new NoExistException(
+				"The person with id " + cc + " does not exist into db, cannot be found");
 	}
 
 	@Override
@@ -73,20 +76,20 @@ public class PersonUseCase implements PersonInputPort {
 	}
 
 	@Override
-	public List<Phone> getPhones(Integer identification) throws NoExistException {
-		Person oldPerson = personPersintence.findById(identification);
+	public List<Phone> getPhones(Long cc) throws NoExistException {
+		Person oldPerson = personPersistance.findById(cc);
 		if (oldPerson != null)
 			return oldPerson.getPhoneNumbers();
 		throw new NoExistException(
-				"The person with id " + identification + " does not exist into db, cannot be getting phones");
+				"The person with id " + cc + " does not exist into db, cannot get phones");
 	}
 
 	@Override
-	public List<Study> getStudies(Integer identification) throws NoExistException {
-		Person oldPerson = personPersintence.findById(identification);
+	public List<Study> getStudies(Long cc) throws NoExistException {
+		Person oldPerson = personPersistance.findById(cc);
 		if (oldPerson != null)
 			return oldPerson.getStudies();
 		throw new NoExistException(
-				"The person with id " + identification + " does not exist into db, cannot be getting studies");
+				"The person with id " + cc + " does not exist into db, cannot get studies");
 	}
 }

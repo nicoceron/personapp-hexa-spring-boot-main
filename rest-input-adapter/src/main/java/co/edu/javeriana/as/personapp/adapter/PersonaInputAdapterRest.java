@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import co.edu.javeriana.as.personapp.application.port.in.PersonInputPort;
 import co.edu.javeriana.as.personapp.application.port.out.PersonOutputPort;
-import co.edu.javeriana.as.personapp.application.usecase.PersonUseCase;
 import co.edu.javeriana.as.personapp.common.annotations.Adapter;
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
 import co.edu.javeriana.as.personapp.common.exceptions.NoExistException;
@@ -34,17 +33,18 @@ public class PersonaInputAdapterRest {
 	private PersonOutputPort personOutputPortMongo;
 
 	@Autowired
-	private PersonaMapperRest personaMapperRest;
+	private PersonInputPort personInputPort;
 
-	PersonInputPort personInputPort;
+	@Autowired
+	private PersonaMapperRest personaMapperRest;
 
 	private String setPersonOutputPortInjection(String dbOption) throws InvalidOptionException {
 		if (dbOption.equalsIgnoreCase(DatabaseOption.MARIA.toString())) {
-			personInputPort = new PersonUseCase(personOutputPortMaria);
+			personInputPort.setPersistence(personOutputPortMaria);
 			return DatabaseOption.MARIA.toString();
 		} else if (dbOption.equalsIgnoreCase(DatabaseOption.MONGO.toString())) {
-			personInputPort = new PersonUseCase(personOutputPortMongo);
-			return  DatabaseOption.MONGO.toString();
+			personInputPort.setPersistence(personOutputPortMongo);
+			return DatabaseOption.MONGO.toString();
 		} else {
 			throw new InvalidOptionException("Invalid database option: " + dbOption);
 		}
@@ -53,14 +53,14 @@ public class PersonaInputAdapterRest {
 	public List<PersonaResponse> findAll(String database) {
 		log.info("Into findAll PersonaEntity in Input Adapter");
 		try {
-			if(setPersonOutputPortInjection(database).equalsIgnoreCase(DatabaseOption.MARIA.toString())){
+			String dbType = setPersonOutputPortInjection(database);
+			if (dbType.equalsIgnoreCase(DatabaseOption.MARIA.toString())) {
 				return personInputPort.findAll().stream().map(personaMapperRest::fromDomainToAdapterRestMaria)
 						.collect(Collectors.toList());
-			}else {
+			} else {
 				return personInputPort.findAll().stream().map(personaMapperRest::fromDomainToAdapterRestMongo)
 						.collect(Collectors.toList());
 			}
-			
 		} catch (InvalidOptionException e) {
 			log.warn(e.getMessage());
 			return new ArrayList<PersonaResponse>();
@@ -80,7 +80,7 @@ public class PersonaInputAdapterRest {
 		}
 	}
 	
-	public PersonaResponse edit(Integer identification, PersonaRequest request) {
+	public PersonaResponse edit(Long identification, PersonaRequest request) {
 		log.info("Into edit PersonaEntity in Input Adapter");
 		try {
 			setPersonOutputPortInjection(request.getDatabase());
@@ -89,20 +89,21 @@ public class PersonaInputAdapterRest {
 			return personaMapperRest.fromDomainToAdapterRest(person, request.getDatabase());
 		} catch (InvalidOptionException | NoExistException e) {
 			log.warn(e.getMessage());
-			return new PersonaResponse(request.getDni(), request.getFirstName(), request.getLastName(), 
+			return new PersonaResponse(request.getDni(), request.getFirstName(), request.getLastName(),
 					request.getAge(), request.getSex(), request.getDatabase(), "ERROR: " + e.getMessage());
 		}
 	}
 	
-	public PersonaResponse delete(Integer identification, String database) {
+	public PersonaResponse delete(Long identification, String database) {
 		log.info("Into delete PersonaEntity in Input Adapter");
 		try {
 			setPersonOutputPortInjection(database);
-			Person person = personInputPort.findOne(identification);
+			Person person = personInputPort.findOne(identification); // Needed to return details in response
 			Boolean result = personInputPort.drop(identification);
 			if (result) {
 				return personaMapperRest.fromDomainToAdapterRest(person, database, "DELETED");
 			} else {
+				// This case might not be reached if drop throws NoExistException
 				return personaMapperRest.createErrorResponse("Failed to delete person with ID: " + identification, database);
 			}
 		} catch (InvalidOptionException | NoExistException e) {
@@ -111,7 +112,7 @@ public class PersonaInputAdapterRest {
 		}
 	}
 	
-	public PersonaResponse findById(Integer identification, String database) {
+	public PersonaResponse findById(Long identification, String database) {
 		log.info("Into findById PersonaEntity in Input Adapter");
 		try {
 			setPersonOutputPortInjection(database);
