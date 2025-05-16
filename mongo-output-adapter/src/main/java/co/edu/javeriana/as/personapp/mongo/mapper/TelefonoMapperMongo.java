@@ -10,6 +10,9 @@ import co.edu.javeriana.as.personapp.mongo.document.PersonaDocument;
 import co.edu.javeriana.as.personapp.mongo.document.TelefonoDocument;
 import lombok.NonNull;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Mapper
 public class TelefonoMapperMongo {
 
@@ -17,44 +20,53 @@ public class TelefonoMapperMongo {
 	private PersonaMapperMongo personaMapperMongo;
 
 	public TelefonoDocument fromDomainToAdapter(Phone phone) {
-		TelefonoDocument telefonoDocument = new TelefonoDocument();
-		telefonoDocument.setId(phone.getNumber());
-		telefonoDocument.setOper(phone.getCompany());
-		telefonoDocument.setPrimaryDuenio(validateDuenio(phone.getOwner()));
-		return telefonoDocument;
-	}
-
-	private PersonaDocument validateDuenio(@NonNull Person owner) {
-		if (owner == null) return new PersonaDocument();
-		
-		// Just create a simple document with basic data to avoid circular dependencies
-		PersonaDocument personaDocument = new PersonaDocument();
-		personaDocument.setId(owner.getIdentification());
-		personaDocument.setNombre(owner.getFirstName());
-		personaDocument.setApellido(owner.getLastName());
-		personaDocument.setGenero(owner.getGender() == Gender.FEMALE ? "F" : owner.getGender() == Gender.MALE ? "M" : " ");
-		personaDocument.setEdad(owner.getAge());
-		return personaDocument;
+		if (phone == null) {
+			return null;
+		}
+		Integer personId = null;
+		if (phone.getOwner() != null && phone.getOwner().getIdentification() != null) {
+			// Just store the person's ID instead of the entire PersonaDocument
+			personId = phone.getOwner().getIdentification();
+		}
+		return new TelefonoDocument(
+				phone.getNumber(),
+				phone.getCompany(),
+				personId
+		);
 	}
 
 	public Phone fromAdapterToDomain(TelefonoDocument telefonoDocument) {
-		Phone phone = new Phone();
-		phone.setNumber(telefonoDocument.getId());
-		phone.setCompany(telefonoDocument.getOper());
-		phone.setOwner(validateOwner(telefonoDocument.getPrimaryDuenio()));
-		return phone;
+		if (telefonoDocument == null) {
+			return null;
+		}
+		Person person = null;
+		if (telefonoDocument.getDuenio() != null) {
+			// Create a minimal Person with just the ID
+			person = new Person();
+			person.setIdentification(telefonoDocument.getDuenio());
+		}
+		return new Phone(
+				telefonoDocument.getNum(),
+				telefonoDocument.getOper(),
+				person
+		);
 	}
 
-	private @NonNull Person validateOwner(PersonaDocument duenio) {
-		if (duenio == null) return new Person();
-		
-		// Just create a simple person with basic data to avoid circular dependencies
-		Person person = new Person();
-		person.setIdentification(duenio.getId());
-		person.setFirstName(duenio.getNombre());
-		person.setLastName(duenio.getApellido());
-		person.setGender("F".equals(duenio.getGenero()) ? Gender.FEMALE : "M".equals(duenio.getGenero()) ? Gender.MALE : Gender.OTHER);
-		person.setAge(duenio.getEdad());
-		return person;
+	public List<Phone> fromAdapterListToDomainList(List<TelefonoDocument> telefonoDocuments) {
+		if (telefonoDocuments == null) {
+			return null;
+		}
+		return telefonoDocuments.stream()
+				.map(this::fromAdapterToDomain)
+				.collect(Collectors.toList());
+	}
+
+	public List<TelefonoDocument> fromDomainListToAdapterList(List<Phone> phones) {
+		if (phones == null) {
+			return null;
+		}
+		return phones.stream()
+				.map(this::fromDomainToAdapter)
+				.collect(Collectors.toList());
 	}
 }

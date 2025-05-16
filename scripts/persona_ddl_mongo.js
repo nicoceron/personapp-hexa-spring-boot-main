@@ -45,11 +45,11 @@ db.createCollection("profesion", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      required: ["_id", "nom"],
+      required: ["_id", "nombre"],
       properties: {
         _id: { bsonType: "int" },
-        nom: { bsonType: "string" },
-        des: { bsonType: ["string", "null"] },
+        nombre: { bsonType: "string" },
+        descripcion: { bsonType: ["string", "null"] },
         _class: { bsonType: "string" },
       },
     },
@@ -75,10 +75,11 @@ db.createCollection("estudios", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      required: ["id_prof", "cc_per"],
+      required: ["_id", "idProf", "ccPer"],
       properties: {
-        id_prof: { bsonType: "int" },
-        cc_per: { bsonType: "int" },
+        _id: { bsonType: "string" },
+        idProf: { bsonType: "int" },
+        ccPer: { bsonType: "int" },
         fecha: { bsonType: ["date", "null"] },
         univer: { bsonType: ["string", "null"] },
         _class: { bsonType: "string" },
@@ -89,6 +90,6 @@ db.createCollection("estudios", {
 
 // Create indexes for references (similar to foreign keys)
 db.telefono.createIndex({ duenio: 1 });
-db.estudios.createIndex({ cc_per: 1 });
-db.estudios.createIndex({ id_prof: 1 });
-db.estudios.createIndex({ id_prof: 1, cc_per: 1 }, { unique: true });
+db.estudios.createIndex({ ccPer: 1 });
+db.estudios.createIndex({ idProf: 1 });
+db.estudios.createIndex({ ccPer: 1, idProf: 1 }, { unique: true });

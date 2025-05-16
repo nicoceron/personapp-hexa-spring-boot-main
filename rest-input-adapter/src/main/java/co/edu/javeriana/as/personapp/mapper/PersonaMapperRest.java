@@ -5,7 +5,9 @@ import co.edu.javeriana.as.personapp.domain.Gender;
 import co.edu.javeriana.as.personapp.domain.Person;
 import co.edu.javeriana.as.personapp.model.request.PersonaRequest;
 import co.edu.javeriana.as.personapp.model.response.PersonaResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Mapper
 public class PersonaMapperRest {
 	
@@ -37,14 +39,22 @@ public class PersonaMapperRest {
 		person.setIdentification(Integer.parseInt(request.getDni()));
 		person.setFirstName(request.getFirstName());
 		person.setLastName(request.getLastName());
-		if (request.getAge() != null && !request.getAge().isEmpty()) {
-			person.setAge(Integer.parseInt(request.getAge()));
+		person.setAge(request.getAge() != null && !request.getAge().isEmpty() ? Integer.parseInt(request.getAge()) : null );
+		String genderStr = request.getSex();
+		log.info("PersonaMapperRest: Converting gender string '{} ' to Gender enum.", genderStr);
+		if (genderStr != null) {
+			if (genderStr.equalsIgnoreCase("MASCULINO") || genderStr.equalsIgnoreCase("MALE") || genderStr.equalsIgnoreCase("M")) {
+				person.setGender(Gender.MALE);
+			} else if (genderStr.equalsIgnoreCase("FEMENINO") || genderStr.equalsIgnoreCase("FEMALE") || genderStr.equalsIgnoreCase("F")) {
+				person.setGender(Gender.FEMALE);
+			} else {
+				person.setGender(Gender.OTHER);
+			}
+		} else {
+		    log.warn("PersonaMapperRest: Gender string from request is null. Setting gender to OTHER by default.");
+			person.setGender(Gender.OTHER);
 		}
-		if ("M".equalsIgnoreCase(request.getSex())) {
-			person.setGender(Gender.MALE);
-		} else if ("F".equalsIgnoreCase(request.getSex())) {
-			person.setGender(Gender.FEMALE);
-		}
+		log.info("PersonaMapperRest: Gender enum set to {} for DNI {}.", person.getGender(), person.getIdentification());
 		return person;
 	}
 	

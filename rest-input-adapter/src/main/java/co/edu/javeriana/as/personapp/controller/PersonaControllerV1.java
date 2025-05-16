@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.javeriana.as.personapp.adapter.PersonaInputAdapterRest;
 import co.edu.javeriana.as.personapp.model.request.PersonaRequest;
 import co.edu.javeriana.as.personapp.model.response.PersonaResponse;
+import co.edu.javeriana.as.personapp.model.response.PhoneResponse;
+import co.edu.javeriana.as.personapp.model.response.StudyResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -58,5 +60,23 @@ public class PersonaControllerV1 {
 	public void delete(@PathVariable String database, @PathVariable Long id) {
 		log.info("DELETE /api/v1/persona/{}/{} - Delete persona", database, id);
 		personaInputAdapterRest.delete(id, database.toUpperCase());
+	}
+	
+	@GetMapping(path = "/{database}/count", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Integer count(@PathVariable String database) {
+		log.info("GET /api/v1/persona/{}/count - Count personas", database);
+		return personaInputAdapterRest.count(database.toUpperCase());
+	}
+	
+	@GetMapping(path = "/{database}/{id}/phones", produces = MediaType.APPLICATION_JSON_VALUE)
+	public List<PhoneResponse> getPhones(@PathVariable String database, @PathVariable Long id) {
+		log.info("GET /api/v1/persona/{}/{}/phones - Get phones for persona", database, id);
+		return personaInputAdapterRest.getPhones(id, database.toUpperCase());
+	}
+	
+	@GetMapping(path = "/{database}/{id}/studies", produces = MediaType.APPLICATION_JSON_VALUE)
+	public List<StudyResponse> getStudies(@PathVariable String database, @PathVariable Long id) {
+		log.info("GET /api/v1/persona/{}/{}/studies - Get studies for persona", database, id);
+		return personaInputAdapterRest.getStudies(id, database.toUpperCase());
 	}
 }

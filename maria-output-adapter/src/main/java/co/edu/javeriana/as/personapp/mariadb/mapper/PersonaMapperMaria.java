@@ -15,7 +15,9 @@ import co.edu.javeriana.as.personapp.mariadb.entity.EstudiosEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.PersonaEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.TelefonoEntity;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Mapper
 public class PersonaMapperMaria {
 
@@ -27,6 +29,10 @@ public class PersonaMapperMaria {
 
 	public PersonaEntity fromDomainToAdapter(Person person) {
 		PersonaEntity personaEntity = new PersonaEntity();
+		log.info("PersonaMapperMaria: Mapping Person domain (ID: {}) to PersonaEntity. Gender from domain: {}", person.getIdentification(), person.getGender());
+		if (person.getGender() == null) {
+		    log.error("CRITICAL: Person domain object has NULL gender when trying to map to PersonaEntity!");
+        }
 		personaEntity.setCc(person.getIdentification());
 		personaEntity.setNombre(person.getFirstName());
 		personaEntity.setApellido(person.getLastName());
@@ -58,6 +64,9 @@ public class PersonaMapperMaria {
 	}
 
 	public Person fromAdapterToDomain(PersonaEntity personaEntity) {
+		if (personaEntity == null) {
+			return null; // Or handle as an empty Person domain object if preferred
+		}
 		Person person = new Person();
 		person.setIdentification(personaEntity.getCc());
 		person.setFirstName(personaEntity.getNombre());
@@ -67,7 +76,20 @@ public class PersonaMapperMaria {
 		
 		// Skip study relationships to avoid circular dependencies
 		person.setStudies(new ArrayList<Study>());
-		person.setPhoneNumbers(validatePhones(personaEntity.getTelefonos()));
+		if (personaEntity.getTelefonos() != null) {
+			person.setPhoneNumbers(personaEntity.getTelefonos().stream()
+				.map(telefonoEntity -> {
+					// Create Phone without setting its owner to break the cycle
+					Phone phone = new Phone();
+					phone.setNumber(telefonoEntity.getNum());
+					phone.setCompany(telefonoEntity.getOperador());
+					// phone.setOwner(person); // This would cause the cycle
+					return phone;
+				})
+				.collect(Collectors.toList()));
+		} else {
+			person.setPhoneNumbers(new ArrayList<Phone>());
+		}
 		return person;
 	}
 

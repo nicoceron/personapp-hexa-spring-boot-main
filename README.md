@@ -41,10 +41,11 @@ cd personapp-hexa-spring-boot-main
 
 ### 2. Build the Application
 
-This command will compile the code, run tests (currently skipped in this command for speed), and package the application modules into JAR files. This includes packaging the `rest-input-adapter` (for Docker) and the `cli-input-adapter` (for local execution).
+This command will compile the code, run tests (currently skipped in this command for speed), install the application modules into your local Maven repository, and package the application. This includes packaging the `rest-input-adapter` (for Docker) and the `cli-input-adapter` (for local execution).
+The `flatten-maven-plugin` is used in the root `pom.xml` to ensure correct property resolution (e.g., `${revision}`) during the build.
 
 ```bash
-mvn clean package -DskipTests
+mvn clean install -DskipTests
 ```
 
 ### 3. Running the REST API with Docker Compose
@@ -80,6 +81,39 @@ Database initialization scripts (`persona_ddl_maria.sql`, `persona_dml_maria.sql
   - `DELETE /api/v1/persona/{database}/{id}`: Delete a person by ID from the specified database.
   - `GET /api/v1/persona/{database}/count`: Get the count of persons in the specified database.
 
+### Application Status and Testing
+
+As of the latest updates:
+
+- All core entities (`Person`, `Profession`, `Study`, `Phone`) are fully implemented across the domain, application, and persistence layers for both MariaDB and MongoDB.
+- Comprehensive CRUD (Create, Read, Update, Delete) operations for all four entities have been successfully tested via the REST API (`http://localhost:3000`) for both MariaDB and MongoDB backends.
+- The application is stable, and the database DDL/DML scripts correctly initialize the databases when using Docker Compose with fresh volumes.
+
+### Running Both REST API and CLI Simultaneously
+
+One of the key benefits of the hexagonal architecture is that multiple input adapters can interact with the same application core. This project demonstrates this by allowing both the REST API and CLI to run simultaneously:
+
+1. **Start the Docker Environment:**
+
+   ```bash
+   docker-compose up -d --build
+   ```
+
+   This starts the databases and the REST API.
+
+2. **Run the CLI in a Separate Terminal:**
+
+   ```bash
+   java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
+   ```
+
+3. **Work with Both Interfaces:**
+   - Use the CLI for terminal-based operations
+   - Access the REST API via `http://localhost:3000/swagger-ui/index.html`
+   - Both interfaces interact with the same databases in real-time
+
+Changes made through one interface will be immediately visible in the other because they share the same underlying databases.
+
 ### 5. Running the CLI (Command-Line Interface) Application
 
 The CLI application runs locally and connects to the MariaDB and MongoDB databases that are (presumably) running via Docker Compose.
@@ -98,6 +132,7 @@ java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
 ```
 
 This will start the Spring Boot CLI application. It will present a menu in the console allowing you to choose the database (MariaDB or MongoDB) and perform operations.
+The CLI now correctly handles `InvalidOptionException` during menu interactions for a smoother user experience.
 
 **CLI Database Configuration (`cli-input-adapter/src/main/resources/application.properties`):**
 
@@ -144,6 +179,68 @@ If you also want to remove the Docker volumes (which will delete the database da
 ```bash
 docker-compose down -v
 ```
+
+## Running Both REST API and CLI Simultaneously
+
+This project is set up to allow both the REST API and CLI interfaces to work simultaneously:
+
+1. **Start the REST API and Databases with Docker:**
+
+   ```bash
+   docker-compose up -d --build
+   ```
+
+   This starts three containers:
+
+   - `personapp-mariadb`: MariaDB database with port `3307` exposed to the host
+   - `personapp-mongodb`: MongoDB database with port `27017` exposed to the host
+   - `personapp-api`: REST API running on port `3000`
+
+2. **Run the CLI Application Locally:**
+
+   ```bash
+   java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
+   ```
+
+   The CLI is configured to connect to the Docker database containers through their exposed ports:
+
+   - MariaDB: `localhost:3307`
+   - MongoDB: `localhost:27017`
+
+3. **Access Both Simultaneously:**
+   - Use the CLI for command-line operations
+   - Use the REST API at `http://localhost:3000` for HTTP operations
+   - Both interfaces operate on the same databases, so changes made in one are visible in the other
+
+### Architecture Notes
+
+This setup preserves the hexagonal architecture while offering multiple user interfaces:
+
+- The **domain** and **application** modules contain the core business logic
+- The **rest-input-adapter** and **cli-input-adapter** are alternative input adapters
+- The **maria-output-adapter** and **mongo-output-adapter** are alternative output adapters
+- All adapters connect to the same application core through its ports
+
+### Using the Convenience Script
+
+A convenience script `run-both.sh` is provided to automate the process of starting both interfaces:
+
+```bash
+# Make the script executable (first time only)
+chmod +x run-both.sh
+
+# Run both interfaces
+./run-both.sh
+```
+
+This script will:
+
+1. Build the application with Maven
+2. Start the Docker containers (REST API and databases)
+3. Wait for the REST API to be available
+4. Launch the CLI application
+
+When you exit the CLI, the REST API and databases will continue running in Docker. Use `docker-compose down` to stop them when done.
 
 ## Project Structure Overview
 

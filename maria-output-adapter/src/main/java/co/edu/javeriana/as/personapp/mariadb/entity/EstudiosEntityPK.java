@@ -5,10 +5,17 @@ import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  *
  * @author aasanchez
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Embeddable
 public class EstudiosEntityPK implements Serializable {
 
@@ -17,35 +24,11 @@ public class EstudiosEntityPK implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	@Basic(optional = false)
-	@Column(name = "id_prof", nullable = false)
+	@Column(name = "id_prof")
 	private int idProf;
 	@Basic(optional = false)
-	@Column(name = "cc_per", nullable = false)
+	@Column(name = "cc_per")
 	private int ccPer;
-
-	public EstudiosEntityPK() {
-	}
-
-	public EstudiosEntityPK(int idProf, int ccPer) {
-		this.idProf = idProf;
-		this.ccPer = ccPer;
-	}
-
-	public int getIdProf() {
-		return idProf;
-	}
-
-	public void setIdProf(int idProf) {
-		this.idProf = idProf;
-	}
-
-	public int getCcPer() {
-		return ccPer;
-	}
-
-	public void setCcPer(int ccPer) {
-		this.ccPer = ccPer;
-	}
 
 	@Override
 	public int hashCode() {

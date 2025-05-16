@@ -1,11 +1,7 @@
 package co.edu.javeriana.as.personapp.mongo.document;
 
-import java.util.List;
-
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,13 +10,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document("profesion")
+@Document(collection = "profesion")
 public class ProfesionDocument {
+
 	@Id
-	private Integer id;
-	private String nom;
-	private String des;
-	@DocumentReference(lazy = true, lookup = "{ 'primaryProfesion' : ?#{#self._id} }")
-	@ReadOnlyProperty
-	private List<EstudiosDocument> estudios;
+	private Integer id; // Corresponds to Profession's identification
+	private String nombre; // Corresponds to Profession's name
+	private String descripcion; // Corresponds to Profession's description
+
+	// No direct mapping for List<Study> studies from domain.Profession here
+	// as it's not typically stored embedded this way unless specifically designed.
+	// If studies were to be embedded, this class would need a List<StudyDocument> or similar.
 }

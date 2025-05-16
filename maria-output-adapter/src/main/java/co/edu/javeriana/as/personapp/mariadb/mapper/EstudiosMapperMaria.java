@@ -2,7 +2,10 @@ package co.edu.javeriana.as.personapp.mariadb.mapper;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,59 +32,40 @@ public class EstudiosMapperMaria {
 		EstudiosEntityPK estudioPK = new EstudiosEntityPK();
 		estudioPK.setCcPer(study.getPerson().getIdentification());
 		estudioPK.setIdProf(study.getProfession().getIdentification());
-		EstudiosEntity estudio = new EstudiosEntity();
-		estudio.setEstudiosPK(estudioPK);
-		estudio.setFecha(validateFecha(study.getGraduationDate()));
-		estudio.setUniver(validateUniver(study.getUniversityName()));
-		return estudio;
-	}
 
-	private Date validateFecha(LocalDate graduationDate) {
-		return graduationDate != null
-				? Date.from(graduationDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
-				: null;
-	}
+		EstudiosEntity estudiosEntity = new EstudiosEntity(estudioPK);
+		estudiosEntity.setFecha(study.getGraduationDate() != null ? Date.from(study.getGraduationDate().atStartOfDay(ZoneId.systemDefault()).toInstant()) : null);
+		estudiosEntity.setUniver(study.getUniversityName());
+		
+		// Set related entities for FK relationship
+		PersonaEntity personaEntity = new PersonaEntity();
+		personaEntity.setCc(study.getPerson().getIdentification());
+		// Potentially fetch the full PersonaEntity if needed by ORM, but for FK only ID is usually enough
+		// personaEntity = personaRepositoryMaria.findById(study.getPerson().getIdentification()).orElse(null);
+		estudiosEntity.setPersona(personaEntity);
 
-	private String validateUniver(String universityName) {
-		return universityName != null ? universityName : "";
+		ProfesionEntity profesionEntity = new ProfesionEntity();
+		profesionEntity.setId(study.getProfession().getIdentification());
+		// Potentially fetch the full ProfesionEntity if needed
+		// profesionEntity = profesionRepositoryMaria.findById(study.getProfession().getIdentification()).orElse(null);
+		estudiosEntity.setProfesion(profesionEntity);
+		
+		return estudiosEntity;
 	}
 
 	public Study fromAdapterToDomain(EstudiosEntity estudiosEntity) {
-		Study study = new Study();
-		
-		// Create a simplified Person to avoid circular dependencies
-		Person person = new Person();
-		PersonaEntity personaEntity = estudiosEntity.getPersona();
-		if (personaEntity != null) {
-			person.setIdentification(personaEntity.getCc());
-			person.setFirstName(personaEntity.getNombre());
-			person.setLastName(personaEntity.getApellido());
-			person.setGender(personaEntity.getGenero() == 'F' ? Gender.FEMALE : 
-				personaEntity.getGenero() == 'M' ? Gender.MALE : Gender.OTHER);
-			person.setAge(personaEntity.getEdad());
-		}
-		study.setPerson(person);
-		
-		// Create a simplified Profession to avoid circular dependencies
-		Profession profession = new Profession();
-		ProfesionEntity profesionEntity = estudiosEntity.getProfesion();
-		if (profesionEntity != null) {
-			profession.setIdentification(profesionEntity.getId());
-			profession.setName(profesionEntity.getNom());
-			profession.setDescription(profesionEntity.getDes());
-		}
-		study.setProfession(profession);
-		
-		study.setGraduationDate(validateGraduationDate(estudiosEntity.getFecha()));
-		study.setUniversityName(validateUniversityName(estudiosEntity.getUniver()));
-		return study;
+		Person person = personaMapperMaria.fromAdapterToDomain(estudiosEntity.getPersona());
+		Profession profession = profesionMapperMaria.fromAdapterToDomain(estudiosEntity.getProfesion());
+		LocalDate graduationDate = estudiosEntity.getFecha() != null ? new java.sql.Date(estudiosEntity.getFecha().getTime()).toLocalDate() : null;
+		return new Study(person, profession, graduationDate, estudiosEntity.getUniver());
 	}
 
-	private LocalDate validateGraduationDate(Date fecha) {
-		return fecha != null ? fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : null;
-	}
-
-	private String validateUniversityName(String univer) {
-		return univer != null ? univer : "";
+	public List<Study> fromAdapterListToDomainList(List<EstudiosEntity> estudiosEntities) {
+		if (estudiosEntities == null) {
+			return new ArrayList<>();
+		}
+		return estudiosEntities.stream()
+				.map(this::fromAdapterToDomain)
+				.collect(Collectors.toList());
 	}
 }

@@ -1,21 +1,21 @@
 package co.edu.javeriana.as.personapp.mongo.document;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@Document("telefono")
+@AllArgsConstructor
+@Document(collection = "telefono")
 public class TelefonoDocument {
-	@Id
-	private String id;
-	private String oper;
-	@DocumentReference(lazy = true)
-    private PersonaDocument primaryDuenio;
+
+    @Id
+    private String num; // Phone number as ID
+
+    private String oper;
+
+    private Integer duenio;
 }
