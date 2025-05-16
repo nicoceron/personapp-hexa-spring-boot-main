@@ -15,9 +15,9 @@ public class MongoDBConnectionTest {
 
         try {
             // Define credentials and connection details
-            String username = "root";
-            String password = "root";
-            String authDb = "admin"; // Authentication database
+            String username = "persona_db";
+            String password = "persona_db";
+            String authDb = "persona_db"; // Authentication database
             String host = "localhost";
             int port = 27017;
 

@@ -17,13 +17,12 @@ public class StudyMapperCli {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE; // YYYY-MM-DD
 
-    public StudyModelCli fromDomainToAdapterCli(Study study, String database) {
+    public StudyModelCli fromDomainToAdapterCli(Study study) {
         StudyModelCli studyModelCli = new StudyModelCli();
         studyModelCli.setPersonId(study.getPerson().getIdentification());
         studyModelCli.setProfessionId(study.getProfession().getIdentification());
         studyModelCli.setGraduationDate(study.getGraduationDate() != null ? study.getGraduationDate().format(DATE_FORMATTER) : null);
         studyModelCli.setUniversityName(study.getUniversityName());
-        studyModelCli.setDatabase(database);
         return studyModelCli;
     }
 

@@ -62,20 +62,25 @@ public class StudyInputAdapterCli {
     }
 
     public void createStudy(Scanner scanner) {
+        log.info("Creating a new Study...");
         try {
-            System.out.println("Enter Database (MARIA or MONGO):");
-            String db = scanner.nextLine().toUpperCase();
-            setStudyOutputPort(db);
-
             System.out.println("Enter Person ID (CC):");
             Integer personId = safeIntegerInput(scanner);
             scanner.nextLine(); // Consume newline
             Person person = personInputPort.findOne(personId.longValue()); // Validate person
+            if (person == null) {
+                System.out.println("Error: Person with ID " + personId + " does not exist.");
+                return;
+            }
 
             System.out.println("Enter Profession ID:");
             Integer professionId = safeIntegerInput(scanner);
             scanner.nextLine(); // Consume newline
             Profession profession = professionInputPort.findOne(professionId); // Validate profession
+            if (profession == null) {
+                System.out.println("Error: Profession with ID " + professionId + " does not exist.");
+                return;
+            }
 
             System.out.println("Enter University Name:");
             String universityName = scanner.nextLine();
@@ -93,18 +98,19 @@ public class StudyInputAdapterCli {
             }
 
             Study newStudy = new Study(person, profession, graduationDate, universityName);
-            studyInputPort.create(newStudy);
-            System.out.println("Study created successfully in " + db);
+            Study createdStudy = studyInputPort.create(newStudy);
+            if (createdStudy != null) {
+                 System.out.println("Study created successfully.");
+            } else {
+                System.out.println("Failed to create study.");
+            }
 
         } catch (InputMismatchException e) {
             log.warn("Invalid input type: {}", e.getMessage());
             System.out.println("Error: Invalid input type provided.");
+            if(scanner.hasNextLine()) scanner.nextLine(); // consume if anything left
         } catch (NoExistException e) {
-            log.warn("Error creating study: {}", e.getMessage());
-            System.out.println("Error: " + e.getMessage());
-        } catch (InvalidOptionException e) {
-            log.warn("Invalid database option: {}", e.getMessage());
-            System.out.println("Error: " + e.getMessage());
+            log.warn("Error creating study due to non-existent entity: {}", e.getMessage());
         } catch (Exception e) {
             log.error("An unexpected error occurred while creating study: ", e);
             System.out.println("An unexpected error occurred. Please check logs.");
@@ -112,11 +118,8 @@ public class StudyInputAdapterCli {
     }
 
     public void findStudyById(Scanner scanner) {
+        log.info("Finding Study by ID...");
         try {
-            System.out.println("Enter Database (MARIA or MONGO):");
-            String db = scanner.nextLine().toUpperCase();
-            setStudyOutputPort(db);
-
             System.out.println("Enter Person ID (CC) of the study to find:");
             Integer personId = safeIntegerInput(scanner);
             scanner.nextLine(); 
@@ -126,18 +129,20 @@ public class StudyInputAdapterCli {
             scanner.nextLine(); 
 
             Study study = studyInputPort.findOne(personId, professionId);
-            StudyModelCli model = studyMapperCli.fromDomainToAdapterCli(study, db);
-            System.out.println("Found Study: " + model);
+            if (study != null) {
+                StudyModelCli model = studyMapperCli.fromDomainToAdapterCli(study);
+                System.out.println("Found Study: " + model);
+            } else {
+                System.out.println("Study not found for Person ID " + personId + " and Profession ID " + professionId + ".");
+            }
 
         } catch (InputMismatchException e) {
             log.warn("Invalid input type: {}", e.getMessage());
             System.out.println("Error: Invalid input type provided.");
+            if(scanner.hasNextLine()) scanner.nextLine();
         } catch (NoExistException e) {
             log.warn("Error finding study: {}", e.getMessage());
-            System.out.println("Error: " + e.getMessage());
-        } catch (InvalidOptionException e) {
-            log.warn("Invalid database option: {}", e.getMessage());
-            System.out.println("Error: " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
             log.error("An unexpected error occurred while finding study: ", e);
             System.out.println("An unexpected error occurred. Please check logs.");
@@ -145,26 +150,142 @@ public class StudyInputAdapterCli {
     }
 
     public void listAllStudies(Scanner scanner) {
+        log.info("Listing all Studies...");
         try {
-            System.out.println("Enter Database (MARIA or MONGO):");
-            String db = scanner.nextLine().toUpperCase();
-            setStudyOutputPort(db);
-
             List<Study> studies = studyInputPort.findAll();
             if (studies.isEmpty()) {
-                System.out.println("No studies found in " + db + ".");
+                System.out.println("No studies found.");
                 return;
             }
-            System.out.println("Studies in " + db + ":");
+            System.out.println("All Studies:");
             studies.forEach(study -> {
-                StudyModelCli model = studyMapperCli.fromDomainToAdapterCli(study, db);
+                StudyModelCli model = studyMapperCli.fromDomainToAdapterCli(study);
                 System.out.println(model);
             });
-        } catch (InvalidOptionException e) {
-            log.warn("Invalid database option: {}", e.getMessage());
-            System.out.println("Error: " + e.getMessage());
         } catch (Exception e) {
             log.error("An unexpected error occurred while listing studies: ", e);
+            System.out.println("An unexpected error occurred. Please check logs.");
+        }
+    }
+
+    public void editStudy(Scanner scanner) {
+        log.info("Editing a Study...");
+        try {
+            System.out.println("Enter Person ID (CC) of the study to edit:");
+            Integer personId = safeIntegerInput(scanner);
+            scanner.nextLine(); // Consume newline
+
+            System.out.println("Enter Profession ID of the study to edit:");
+            Integer professionId = safeIntegerInput(scanner);
+            scanner.nextLine(); // Consume newline
+
+            Study existingStudy = studyInputPort.findOne(personId, professionId);
+            if (existingStudy == null) {
+                System.out.println("Error: Study not found for Person ID " + personId + " and Profession ID " + professionId + ".");
+                return;
+            }
+
+            System.out.println("Current University Name: " + existingStudy.getUniversityName());
+            System.out.println("Enter new University Name (or press Enter to keep current):");
+            String newUniversityNameStr = scanner.nextLine();
+            String finalUniversityName = (newUniversityNameStr == null || newUniversityNameStr.trim().isEmpty()) ? existingStudy.getUniversityName() : newUniversityNameStr.trim();
+
+            String currentGradDateStr = existingStudy.getGraduationDate() != null ? existingStudy.getGraduationDate().format(DATE_FORMATTER) : "Not set";
+            System.out.println("Current Graduation Date: " + currentGradDateStr);
+            System.out.println("Enter new Graduation Date (YYYY-MM-DD, press Enter to keep current, or type 'clear' to remove):");
+            String newGraduationDateStr = scanner.nextLine();
+            LocalDate finalGraduationDate = existingStudy.getGraduationDate();
+
+            if (newGraduationDateStr != null && !newGraduationDateStr.trim().isEmpty()) {
+                if (newGraduationDateStr.trim().equalsIgnoreCase("clear")) {
+                    finalGraduationDate = null;
+                } else {
+                    try {
+                        finalGraduationDate = LocalDate.parse(newGraduationDateStr.trim(), DATE_FORMATTER);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Invalid date format. Study not updated. Please use YYYY-MM-DD or 'clear'.");
+                        return;
+                    }
+                }
+            }
+
+            // Create a new Study object with the original person and profession, but updated fields
+            Study updatedStudy = new Study(
+                existingStudy.getPerson(), 
+                existingStudy.getProfession(), 
+                finalGraduationDate, 
+                finalUniversityName
+            );
+
+            // Pass Person ID and Profession ID along with the updated Study object
+            Study result = studyInputPort.edit(personId, professionId, updatedStudy); 
+            if (result != null) {
+                System.out.println("Study updated successfully.");
+            } else {
+                System.out.println("Failed to update study. The study might have been modified or deleted by another transaction.");
+            }
+
+        } catch (InputMismatchException e) {
+            log.warn("Invalid input type: {}", e.getMessage());
+            System.out.println("Error: Invalid input type provided.");
+            if(scanner.hasNextLine()) scanner.nextLine(); 
+        } catch (NoExistException e) {
+            log.warn("Error editing study: {}", e.getMessage());
+            System.out.println(e.getMessage()); // e.g., "Person or Profession for the study does not exist"
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while editing study: ", e);
+            System.out.println("An unexpected error occurred. Please check logs.");
+        }
+    }
+
+    public void deleteStudy(Scanner scanner) {
+        log.info("Deleting a Study...");
+        try {
+            System.out.println("Enter Person ID (CC) of the study to delete:");
+            Integer personId = safeIntegerInput(scanner);
+            scanner.nextLine(); // Consume newline
+
+            System.out.println("Enter Profession ID of the study to delete:");
+            Integer professionId = safeIntegerInput(scanner);
+            scanner.nextLine(); // Consume newline
+
+            // Optional: Confirm before deleting
+            System.out.println("Are you sure you want to delete the study for Person ID " + personId + " and Profession ID " + professionId + "? (yes/no)");
+            String confirmation = scanner.nextLine().trim();
+
+            if (confirmation.equalsIgnoreCase("yes")) {
+                boolean deleted = studyInputPort.drop(personId, professionId);
+                if (deleted) {
+                    System.out.println("Study deleted successfully.");
+                } else {
+                    System.out.println("Failed to delete study. It might not exist or an error occurred.");
+                }
+            } else {
+                System.out.println("Study deletion cancelled.");
+            }
+
+        } catch (InputMismatchException e) {
+            log.warn("Invalid input type: {}", e.getMessage());
+            System.out.println("Error: Invalid input type provided for IDs.");
+            if(scanner.hasNextLine()) scanner.nextLine();
+        } catch (NoExistException e) {
+            // This specific exception might not be thrown by `drop` if it just returns boolean.
+            // However, keeping it in case the port implementation evolves.
+            log.warn("Error deleting study (NoExistException): {}", e.getMessage());
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while deleting study: ", e);
+            System.out.println("An unexpected error occurred. Please check logs.");
+        }
+    }
+
+    public void countStudies(Scanner scanner) {
+        log.info("Counting all Studies...");
+        try {
+            long count = studyInputPort.count();
+            System.out.println("Total number of studies: " + count);
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while counting studies: ", e);
             System.out.println("An unexpected error occurred. Please check logs.");
         }
     }

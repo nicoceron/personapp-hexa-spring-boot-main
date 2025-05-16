@@ -114,59 +114,83 @@ One of the key benefits of the hexagonal architecture is that multiple input ada
 
 Changes made through one interface will be immediately visible in the other because they share the same underlying databases.
 
-### 5. Running the CLI (Command-Line Interface) Application
+### 5. Running the CLI (Command-Line Interface) Application Locally
 
-The CLI application runs locally and connects to the MariaDB and MongoDB databases that are (presumably) running via Docker Compose.
+The CLI application runs locally and connects to the MariaDB and MongoDB databases that are started via Docker Compose. This setup allows you to interact with the application's core logic through a terminal-based interface.
 
-**Prerequisites for CLI:**
+**Steps to Run the CLI:**
 
-- Ensure the MariaDB and MongoDB containers are running (started via `docker-compose up -d`).
-- Ensure you have built the application using `mvn clean package -DskipTests` so that `cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar` is created and is executable.
+1.  **Ensure Docker Desktop is running.**
 
-**Run the CLI:**
+2.  **Start Database Containers:**
+    Open a terminal in the project root directory (`personapp-hexa-spring-boot-main`) and start the MariaDB and MongoDB database containers in detached mode:
 
-Open a new terminal in the project root directory (`personapp-hexa-spring-boot-main`) and execute:
+    ```bash
+    docker-compose up -d personapp-mariadb personapp-mongodb
+    ```
 
-```bash
-java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
-```
+    This command will use the `docker-compose.yml` file to set up `personapp-mariadb` (accessible on host port `3307`) and `personapp-mongodb` (accessible on host port `27017`). Database DDL/DML scripts for MariaDB (`scripts/persona_ddl_maria.sql`, `scripts/persona_dml_maria.sql`) are run automatically by Docker if the volumes are new.
 
-This will start the Spring Boot CLI application. It will present a menu in the console allowing you to choose the database (MariaDB or MongoDB) and perform operations.
-The CLI now correctly handles `InvalidOptionException` during menu interactions for a smoother user experience.
+3.  **Initialize MongoDB Database (User, Schema, and Data):**
+    The MongoDB database requires manual script execution for user creation, schema setup, and initial data population using `mongosh`. Run the following commands from the project root directory in the specified order:
+
+    - **Create MongoDB User and Run DDL (Schema Definition):** This single script now connects to the `admin` database to create the `persona_db` user (if it doesn't exist) with necessary permissions for the `persona_db` database. Then, it switches to `persona_db` and creates the collections and indexes.
+
+      ```bash
+      mongosh admin -f scripts/persona_ddl_mongo.js
+      ```
+
+      _Note: If the user `persona_db` already exists in the `admin` database, the script will skip the creation step and proceed to DDL. You might see messages indicating this, which is normal._
+
+    - **Run DML (Data Insertion) for MongoDB:** This script populates the MongoDB collections with initial data. It should be run after the user and schema are set up.
+      ```bash
+      mongosh "mongodb://persona_db:persona_db@localhost:27017/persona_db?authSource=admin" -f scripts/persona_dml_mongo.js
+      ```
+
+4.  **Build the Application (if not already built):**
+    Ensure all project modules, including the CLI adapter, are compiled and packaged:
+
+    ```bash
+    mvn clean install -DskipTests
+    ```
+
+    This creates `cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar`.
+
+5.  **Run the CLI Application:**
+    Execute the CLI JAR:
+    ```bash
+    java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
+    ```
+    This will start the Spring Boot CLI application. It will present a menu in the console, allowing you to choose the database (MariaDB or MongoDB) and perform CRUD operations on Personas and other entities.
 
 **CLI Database Configuration (`cli-input-adapter/src/main/resources/application.properties`):**
 
 - **MariaDB**: Connects to `jdbc:mariadb://localhost:3307/persona_db` with user `persona_db` and password `persona_db`.
-- **MongoDB**: Connects to `localhost:27017`, database `persona_db`, with admin user `root` and password `root` (auth database `admin`).
+- **MongoDB**: Connects via URI `mongodb://persona_db:persona_db@localhost:27017/persona_db?authSource=admin`.
 
-By default, the CLI's `PersonUseCase` is instantiated to use the MariaDB adapter (`personOutputAdapterMaria`). The menu within the CLI application allows you to switch the active persistence mechanism between MariaDB and MongoDB for subsequent operations.
+The CLI application allows you to switch the active persistence mechanism between MariaDB and MongoDB for subsequent operations within each module's menu.
 
-### 6. Database Credentials (for Docker environment)
+### 6. Automated Tests
 
-These are configured in `docker-application.properties` (for the REST API) and `docker-compose.yml`.
+The project includes unit tests for the Command-Line Interface (CLI) adapters, focusing on the interaction logic within each adapter (e.g., `PersonaInputAdapterCli`, `ProfesionInputAdapterCli`, `StudyInputAdapterCli`, `TelefonoInputAdapterCli`). These tests utilize JUnit 5 and Mockito to mock dependencies (like input ports and mappers) and verify the behavior of the CLI methods.
 
-- **MariaDB**:
+**Running CLI Adapter Tests:**
 
-  - Host (within Docker network for REST API): `personapp-mariadb`
-  - Port (within Docker network for REST API): `3306`
-  - Host (for local CLI access): `localhost`
-  - Port (for local CLI access, mapped by Docker): `3307`
-  - Database Name: `persona_db`
-  - User: `persona_db`
-  - Password: `persona_db`
-  - Root Password (for container): `root`
+To execute the automated tests specifically for the `cli-input-adapter` module, navigate to the project's root directory and run the following Maven command:
 
-- **MongoDB**:
-  - Host (within Docker network for REST API): `personapp-mongodb`
-  - Port (within Docker network for REST API): `27017`
-  - Host (for local CLI access): `localhost`
-  - Port (for local CLI access, mapped by Docker): `27017`
-  - Database Name: `persona_db`
-  - Admin User (for container and CLI): `root`
-  - Admin Password (for container and CLI): `root`
-  - Authentication Database: `admin`
+```bash
+mvn test -pl cli-input-adapter
+```
 
-### 7. Stopping the Dockerized Services
+or, to rebuild and then test:
+
+```bash
+mvn clean test -pl cli-input-adapter
+```
+
+This command will compile the test classes within the `cli-input-adapter` module and run all JUnit tests. As of the latest updates, all 88 tests for the aforementioned CLI adapters are passing, ensuring the reliability of the CLI operations for `Persona`, `Profesion`, `Study`, and `Telefono` entities.
+
+### 7. Stopping the Environment
 
 To stop all running containers defined in the `docker-compose.yml` file (REST API and databases):
 
