@@ -27,7 +27,6 @@ Before you begin, ensure you have the following installed:
 - **Apache Maven**: For building the project.
 - **Docker**: For running the application and databases in containers.
 - **Docker Compose**: For orchestrating multi-container Docker applications.
-- **MongoDB Shell (mongosh)**: For running MongoDB initialization scripts (if running CLI application locally).
 
 ## Getting Started
 
@@ -100,32 +99,16 @@ The CLI application runs locally and connects to the MariaDB and MongoDB databas
     docker-compose up -d personapp-mariadb personapp-mongodb
     ```
 
-    This command will use the `docker-compose.yml` file to set up `personapp-mariadb` (accessible on host port `3307`) and `personapp-mongodb` (accessible on host port `27017`). Database DDL/DML scripts for MariaDB are run automatically by Docker if the volumes are new.
+    This command will use the `docker-compose.yml` file to set up `personapp-mariadb` (accessible on host port `3307`) and `personapp-mongodb` (accessible on host port `27017`). Database initialization scripts for both MariaDB and MongoDB are automatically executed when the database containers start for the first time (or when their volumes are empty).
 
-3.  **Initialize MongoDB Database (User, Schema, and Data):**
-    The MongoDB database requires manual script execution for user creation, schema setup, and initial data population using `mongosh`. Run the following commands from the project root directory in the specified order:
-
-    - **Create MongoDB User and Run DDL (Schema Definition):**
-      This script connects to the `admin` database to create the `persona_db` user (if it doesn't exist) with necessary permissions for the `persona_db` database. Then, it switches to `persona_db` and creates the collections and indexes.
-
-      ```bash
-      mongosh admin -f scripts/persona_ddl_mongo.js
-      ```
-
-    - **Run DML (Data Insertion) for MongoDB:**
-      This script populates the MongoDB collections with initial data. It should be run after the user and schema are set up.
-      ```bash
-      mongosh "mongodb://persona_db:persona_db@localhost:27017/persona_db?authSource=admin" -f scripts/persona_dml_mongo.js
-      ```
-
-4.  **Build the Application (if not already built):**
+3.  **Build the Application (if not already built):**
     Ensure all project modules, including the CLI adapter, are compiled and packaged:
 
     ```bash
     mvn clean install -DskipTests
     ```
 
-5.  **Run the CLI Application:**
+4.  **Run the CLI Application:**
     Execute the CLI JAR:
     ```bash
     java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
