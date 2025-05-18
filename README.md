@@ -2,6 +2,9 @@
 
 This project is a demonstration of a Hexagonal (Clean) Architecture implemented using Spring Boot. It manages `Person` entities and their related information like `Phone` numbers and `Study` records, with options to persist data in either MariaDB or MongoDB.
 
+<img width="1495" alt="image" src="https://github.com/user-attachments/assets/18f20f99-eab9-4891-9bf5-523e020bff2b" />
+
+
 ## Features
 
 - **Hexagonal Architecture**: Decouples the core application logic from external concerns like UI, databases, and other services.
