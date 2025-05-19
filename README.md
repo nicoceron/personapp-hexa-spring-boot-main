@@ -70,19 +70,8 @@ Database initialization scripts for both MariaDB and MongoDB are automatically e
 
   The API documentation can also be found at `http://localhost:3000/api-docs`.
 
-- **Example API Endpoints**:
-  - `GET /api/v1/persona/{database}`: Get all persons from the specified database (`MARIA` or `MONGO`).
-    - Example: `curl http://localhost:3000/api/v1/persona/MARIA`
-  - `GET /api/v1/persona/{database}/{id}`: Get a specific person by ID from the specified database.
-    - Example: `curl http://localhost:3000/api/v1/persona/MARIA/123456789`
-  - `POST /api/v1/persona`: Create a new person with JSON payload.
-    - Example: `curl -X POST http://localhost:3000/api/v1/persona -H "Content-Type: application/json" -d '{"dni": "999900001", "firstName": "RestTest", "lastName": "User", "sex": "MALE", "database": "MONGO"}'`
-  - `PUT /api/v1/persona/{id}`: Update an existing person with JSON payload.
-    - Example: `curl -X PUT http://localhost:3000/api/v1/persona/999900001 -H "Content-Type: application/json" -d '{"dni": "999900001", "firstName": "RestTest", "lastName": "UserUpdated", "age": "25", "sex": "MALE", "database": "MONGO"}'`
-  - `DELETE /api/v1/persona/{database}/{id}`: Delete a person by ID from the specified database.
-    - Example: `curl -X DELETE http://localhost:3000/api/v1/persona/MONGO/999900001`
-  - `GET /api/v1/persona/{database}/count`: Get the count of persons in the specified database.
-    - Example: `curl -X GET http://localhost:3000/api/v1/persona/MONGO/count`
+<img width="1455" alt="image" src="https://github.com/user-attachments/assets/9ed9a023-006b-45b1-9f46-f74e66e242cc" />
+
 
 ### 5. Running the CLI Locally (with Dockerized Databases and REST API)
 
@@ -112,7 +101,10 @@ This setup describes how to run the **CLI application locally** on your machine 
 
    _In this setup, the CLI application runs directly on your local machine (not in a Docker container), while the databases and REST API run in Docker containers._
 
-4. **Work with Both Interfaces:**
+   <img width="409" alt="image" src="https://github.com/user-attachments/assets/11b82cee-cf4d-4a24-8c24-acfaf6d6ea3e" />
+
+
+5. **Work with Both Interfaces:**
    - Use the CLI for terminal-based operations.
    - Access the REST API via `http://localhost:3000/swagger-ui/index.html`.
    - Both interfaces interact with the same databases in real-time. Changes made through one interface will be immediately visible in the other because they share the same underlying databases.
